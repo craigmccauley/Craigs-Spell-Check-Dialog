@@ -1,0 +1,19 @@
+.misspelled.misspelled-active{
+	background: url('redsquiggle.gif') bottom;
+	background-repeat: repeat-x;
+	font-weight: bold;
+}
+
+#cscdContent{
+	overflow-y: auto;
+	height:100px; 
+	cursor:default;
+}
+
+#cscdModal .dialog-button{
+	width: 95px;
+}
+
+#cscdSuggestionList option{
+	font-size: 2em;
+}
