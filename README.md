@@ -1,2 +1,3 @@
-# Craigs-Spell-Check-Dialog
-jQuery plugin to provide a spellcheck dialog.
+# Craig's Spell Check Dialog
+jQuery plugin to provide a spell check dialog
+
