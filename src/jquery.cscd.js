@@ -109,41 +109,41 @@
 			});
 			
 			//undo click - doesn't work yet...
-			$('#undo').click(function(){
-				var $currentWord = $('#cscdContent .misspelled-active');
+			$('#cscdUndo').click(function(){
+				var $activeWord = $('#cscdContent .misspelled-active');
 				
 				var $nextWord = null;
 				var $typos = $('#cscdContent .misspelled');
-				var useNext = false;
+				var usePrev = false;
 				$($typos.get().reverse()).each(function(){
-					if(useNext){
-						if(!$(this).hasClass('ignore-all') && !$(this).hasClass('change-all')){
-							$nextWord = $(this);
+					var $currentWord = $(this);
+					if(usePrev){
+						if(!$currentWord.hasClass('ignore-all') && !$currentWord.hasClass('change-all')){
+							$nextWord = $currentWord;
 							$nextWord.html($nextWord.data('orig'));
 							return false;
-						} else if($(this).hasClass('ignore-all')){
-							var $firstIgnored = $('#cscdContent .ignore-all').filter(function(){ 
+						} else if($currentWord.hasClass('ignore-all')){
+							var $ignoredWords = $('#cscdContent .ignore-all').filter(function(){ 
 								return $(this).html() === $currentWord.html(); 
-							}).first();
-							if($firstIgnored === $currentWord){
-								$nextWord = $(this);
-								return false;
-							}
-						} else if($(this).hasClass('change-all')){
+							});
+							$nextWord = $ignoredWords.first();
+							$ignoredWords.each(function(){
+								$(this).removeClass('ignore-all');
+							});
+							return false;
+						} else if($currentWord.hasClass('change-all')){
 							var $changedWords = $('#cscdContent .change-all').filter(function(){ 
 								return $(this).html() === $currentWord.html(); 
 							});
-							var $firstChanged = $changedWords.first();
-							if($firstChanged === $currentWord){
-								$nextWord = $(this);
-								$changedWords.each(function(){
-									$(this).html($(this).data('orig'));
-								});
-								return false;
-							}
+							$nextWord = $changedWords.first();
+							$changedWords.each(function(){
+								$(this).html($(this).data('orig'));
+								$(this).removeClass('change-all');
+							});
+							return false;
 						}
-					} else if($(this).hasClass('misspelled-active')){
-						useNext = true;
+					} else if($activeWord.is($currentWord)){
+						usePrev = true;
 					}
 				});
 				self.ProcessWord($nextWord);
