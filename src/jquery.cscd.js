@@ -157,18 +157,61 @@
 			//show modal
 			$('#cscdModal').modal('show');
 			
+			//get individual words
+			var $tempDiv = $('<div />').html(content);			
+			var words = [];
+			//regex that gets all words from a string
+			var wordRegularExpression = new RegExp(/(\w+)/g);
+			var findWords = function(node){
+				switch(node.nodeType){
+					case 1: 
+						$(node).contents().each(function(){ findWords(this);});
+						break;
+					case 3:
+						var nodeValue = node.nodeValue;
+						var match = wordRegularExpression.exec(nodeValue);
+						while (match != null) {
+							words.push(match[1]);
+							match = wordRegularExpression.exec(nodeValue);
+						}
+						break;
+				}
+			};
+			$tempDiv.contents().each(function(){ findWords(this); });
+			//find all distinct words
+			var distinctWords = eliminateDuplicates(words);
+			
 			//check the words
 			$.ajax({
 				type:"POST",
 				url: self.settings.spellcheckURL,
 				dataType: "json",
-				data: "=" + encodeURIComponent(content),
+				data: $.param({ '': distinctWords }, true),
 				processData: false,
 				error: function(XMLHttpRequest, textStatus, errorThrown) {
 					alert('error');
 				},
-				success: function(result) {
-					$('#cscdContent').html(result);
+				success: function(result) {	
+					
+					//replace 
+					var replaceWords = function(node){
+						switch(node.nodeType){
+							case 1:
+								$(node).contents().each(function(){ replaceWords(this);});
+								break;
+							case 3:
+								var nodeValue = node.nodeValue;
+								$(node).replaceWith(nodeValue.replace(wordRegularExpression, 
+									function(str, p1, offset, s){
+										return GetTypo(p1, result);
+									}
+								));	
+								break;
+						}
+					};
+					$tempDiv.contents().each(function(){ replaceWords(this); });
+					
+					$('#cscdContent').html($tempDiv.html());
 					//setup first word			
 					var $firstWord = $('#cscdContent .misspelled:first');
 					if($firstWord.length != 0){
@@ -301,4 +344,28 @@
 			});
 		});
 	};
+	
+	var eliminateDuplicates = function (arr) {
+		var i,
+			len=arr.length,
+			out=[],
+			obj={};
+
+		for (i=0;i<len;i++) {
+			obj[arr[i]]=0;
+		}
+		for (i in obj) {
+			out.push(i);
+		}
+		return out;
+	};
+		
+	var GetTypo = function(word, typos){
+		if(typos[word] == null){
+			return word;
+		} else {
+			return "<span class='misspelled' data-orig='" + word + "' data-suggestions='" + typos[word] + "'>" + word + "</span>";
+		}
+	}
+	
 })( jQuery, window, document );
