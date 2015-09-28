@@ -1,5 +1,6 @@
 // jQuery CSCD - Craig's Spell Check Dialog
 // Requires jQuery & Bootstrap 3 & a red squiggle gif
+// Client side spellchecking requires Typo.js https://github.com/cfinke/Typo.js
 
 // the semi-colon before function invocation is a safety net against concatenated
 // scripts and/or other plugins which may not be closed properly.
@@ -19,7 +20,9 @@
 	// Create the defaults once
 	var pluginName = "cscd",
 		defaults = {
-			spellcheckURL: null,
+			language: 'en-CA',
+			dictionaryPath: null,
+            spellcheckURL: null,
 			suggestionFontSize : '2em',
 			buttonWidth : '95px',
 			noSuggestionsText : '(No Suggestions)'
@@ -32,6 +35,7 @@
 		// more objects, storing the result in the first object. The first object
 		// is generally empty as we don't want to alter the default options for
 		// future instances of the plugin
+		this.typojs = null;
 		this.setContentCallback = null;
 		this.settings = $.extend( {}, defaults, options );
 		this._defaults = defaults;
@@ -148,6 +152,34 @@
 				});
 				self.ProcessWord($nextWord);
 			});
+			
+			//dictionary init for javascript dictionary
+			//pull down aff, dic and custom word files
+            if(self.settings.dictionaryPath != null){
+                var partialpath = self.settings.dictionaryPath + self.settings.language.replace("-", "_");
+                var affPath = partialpath + ".aff";
+                var dicPath = partialpath + ".dic";
+                var customPath = partialpath + "_Custom.txt";
+			    $.when($.ajax(affPath), $.ajax(dicPath), $.ajax(customPath)).done(function(aff, dic, custom){
+                    if(aff[1] != "success" || dic[1] != "success"){
+                        //dictionary files failed to load
+                        alert("Dictionary Files failed to load, spellcheck unvailable.");
+                        return false;
+                    }
+                    //actual dictionary init
+				    self.typojs = new Typo(self.settings.language, aff[0], dic[0]);
+                    if(custom[1] == "success"){
+                        //insert custom words into dictionary
+                        $.each(custom[0].split("\n"), function(){
+                            var customWord = this.trim();
+                            if (!(customWord in self.typojs.dictionaryTable) || typeof self.typojs.dictionaryTable[customWord] != 'object') {
+				                self.typojs.dictionaryTable[customWord] = [];
+				                self.typojs.dictionaryTable[customWord].push([]);
+			                }
+                        });
+                    }
+			    });
+			}
 		},
 		SpellCheck : function(content, setContentCallback){
 			var self = this;
@@ -181,46 +213,62 @@
 			//find all distinct words
 			var distinctWords = eliminateDuplicates(words);
 			
-			//check the words
-			$.ajax({
-				type:"POST",
-				url: self.settings.spellcheckURL,
-				dataType: "json",
-				data: $.param({ '': distinctWords }, true),
-				processData: false,
-				error: function(XMLHttpRequest, textStatus, errorThrown) {
-					alert('error');
-				},
-				success: function(result) {	
-					
-					//replace 
-					var replaceWords = function(node){
-						switch(node.nodeType){
-							case 1:
-								$(node).contents().each(function(){ replaceWords(this);});
-								break;
-							case 3:
-								var nodeValue = node.nodeValue;
-								$(node).replaceWith(nodeValue.replace(wordRegularExpression, 
-									function(str, p1, offset, s){
-										return GetTypo(p1, result);
-									}
-								));	
-								break;
-						}
-					};
-					$tempDiv.contents().each(function(){ replaceWords(this); });
-					
-					$('#cscdContent').html($tempDiv.html());
-					//setup first word			
-					var $firstWord = $('#cscdContent .misspelled:first');
-					if($firstWord.length != 0){
-						self.ProcessWord($firstWord);
-					} else {
-						self.SpellCheckComplete();
-					}
-				}
-			});
+            //set up checking complete function
+            var spellcheckingFunction  = function(suggestions){                
+			    //replace words with suggestions
+			    var replaceWords = function(node){
+				    switch(node.nodeType){
+					    case 1:
+						    $(node).contents().each(function(){ replaceWords(this);});
+						    break;
+					    case 3:
+						    var nodeValue = node.nodeValue;
+						    $(node).replaceWith(nodeValue.replace(wordRegularExpression, 
+							    function(str, p1, offset, s){
+								    return GetTypo(p1, suggestions);
+							    }
+						    ));	
+						    break;
+				    }
+			    };
+			    $tempDiv.contents().each(function(){ replaceWords(this); });			
+			    $('#cscdContent').html($tempDiv.html());
+			    //setup first word			
+			    var $firstWord = $('#cscdContent .misspelled:first');
+			    if($firstWord.length != 0){
+				    self.ProcessWord($firstWord);
+			    } else {
+				    self.SpellCheckComplete();
+			    }
+            };
+
+            //use client side spellcheck by default
+            if(self.settings.dictionaryPath != null){
+			    var suggestions = [];
+			    $.each(distinctWords, function(){
+				    if(!self.typojs.check(this)){
+					    suggestions[this] = self.typojs.suggest(this);
+				    }
+			    });
+                spellcheckingFunction(suggestions);
+            } else if (self.settings.spellcheckURL != null){
+                //otherwise try serverside spellcheck
+                $.ajax({
+				    type:"POST",
+				    url: self.settings.spellcheckURL,
+				    dataType: "json",
+				    data: $.param({ '': distinctWords }, true),
+				    processData: false,
+				    error: function(XMLHttpRequest, textStatus, errorThrown) {
+					    alert('error');
+				    },
+				    success: function(suggestions) {	
+					    spellcheckingFunction(suggestions);
+				    }
+			    });
+            } else {
+                //error no spellcheck providers defined
+            }			
 		},
 		ProcessWord : function($currentWordSpan) {
 			var self = this;
@@ -251,7 +299,7 @@
 				});
 			} else {
 				$replacementWord.val($currentWordSpan.html());
-				$suggestionList.append($('<option/>').html(noSuggestionsText));
+				$suggestionList.append($('<option/>').html(self.settings.noSuggestionsText));
 			}
 			//select first item
 			$suggestionList.find('option:first').prop('selected', true);
@@ -367,5 +415,6 @@
 			return "<span class='misspelled' data-orig='" + word + "' data-suggestions='" + typos[word] + "'>" + word + "</span>";
 		}
 	}
+
 	
 })( jQuery, window, document );
