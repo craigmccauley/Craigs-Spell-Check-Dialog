@@ -22,7 +22,7 @@
 		defaults = {
 			language: 'en-CA',
 			dictionaryPath: null,
-            spellcheckURL: null,
+			spellcheckURL: null,
 			suggestionFontSize : '2em',
 			buttonWidth : '95px',
 			noSuggestionsText : '(No Suggestions)'
