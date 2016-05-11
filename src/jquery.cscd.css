@@ -1,6 +1,7 @@
 .misspelled.misspelled-active{
-	background: url('redsquiggle.gif') bottom;
-	background-repeat: repeat-x;
+	/*background: url('redsquiggle.gif') bottom;
+	background-repeat: repeat-x;*/
+    border-bottom: 3px solid red;
 	font-weight: bold;
 }
 
@@ -11,9 +12,29 @@
 }
 
 #cscdModal .dialog-button{
-	width: 95px;
+	width: 100%;
+    font-size: 20px;
 }
 
 #cscdSuggestionList option{
-	font-size: 2em;
+	font-size: 20px;
+}
+
+#cscdModal .form-control {
+    font-size: 20px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+#cscdModal .col-xs-8 {
+    padding-right: 0;
+}
+
+#cscdModal h4 {
+    margin: 0;
+}
+
+#cscdModal .row {
+    margin-left: -15px;
+    margin-right: -15px;
 }
