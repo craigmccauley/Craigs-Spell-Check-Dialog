@@ -14,6 +14,17 @@ jQuery plugin to provide a spell check dialog
 			//ex. en_CA.aff/en_CA.dic
 			//make sure you can serve .aff and .dic files as text/plain from your web server
 			dictionaryPath : "./Dictionary/",
+			//sample alert (not required, will use js alert by default)
+			alertFunction : function(header, body, callback){
+		            $('#spellCheckModal #confirmModalTitle').text(header);
+		            $('#spellCheckModal #confirmModalMsg').text(body);
+		            $('#spellCheckModal').modal('show');
+		            $('#spellCheckOkButton').unbind('click').on('click', function () {
+		                if (callback) {
+		                    callback();
+		                }
+		            }).focus();
+			}
 		});
 		$('#spellcheckbutton').click(function(){
 			spellchecker.cscd(
@@ -28,6 +39,28 @@ jQuery plugin to provide a spell check dialog
 			);
 		});
 	});
+	
+	<!-- sample modal alert for custom alert -->
+	<div class="modal confirm-modal" id="spellCheckModal" tabindex="-1" data-backdrop="true" data-keyboard="false" role="dialog">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <h3 id="confirmModalTitle" class="modal-title"></h3>
+	            </div>
+	            <div class="modal-body">
+	                <div id="confirmModalMsg" style="padding-bottom: 30px;">
+	                </div>
+	                <div class="btn-group col-sm-12">
+	                    <div class="col-sm-2 col-sm-offset-10">
+	                        <button id="spellCheckOkButton" type="button" class="btn btn-default btn-lg" data-dismiss="modal" aria-hidden="true">OK</button>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+
 	
 ##On the Server Side - if needed
 You will need a function that accepts an array of strings and returns a Dictionary&lt;string, string[]>.
