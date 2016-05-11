@@ -25,7 +25,12 @@
 			spellcheckURL: null,
 			suggestionFontSize : '2em',
 			buttonWidth : '95px',
-			noSuggestionsText : '(No Suggestions)'
+			noSuggestionsText : '(No Suggestions)',
+			alertFunction : function (header, body, callback) {
+			    alert(body);
+			    if (callback)
+			        callback();
+			}
 	};
 
 	// The actual plugin constructor
@@ -49,8 +54,56 @@
 			var self = this;
 			
 			//add modal html to DOM
-			$('body').append('<div id="cscdModal" class="modal" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"> <div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> Spell Check</h4> </div><div class="modal-body"><div class="row"><div class="col-xs-9"><h4>Not in Dictionary:</h4></div></div><div class="row"><div class="col-xs-9"><div id="cscdContent" class="form-control"></div></div><div class="col-xs-3"><button id="cscdIgnoreOne" type="button" class="btn btn-lg btn-default dialog-button">Ignore</button><button id="cscdIgnoreAll" type="button" class="btn btn-lg btn-default dialog-button">Ig. All</button></div></div><div class="row"><div class="col-xs-9"><h4>Change To:</h4></div></div><div class="row"><div class="col-xs-9"><input id="cscdReplacementWord" type="text" class="form-control"/><select id="cscdSuggestionList" class="form-control" size="4" ></select></div><div class="col-xs-3"><button id="cdcsChangeOne" type="button" class="btn btn-lg btn-default dialog-button change-button">Change</button><button id="cscdChangeAll" type="button" class="btn btn-lg btn-default dialog-button">Chg. All</button><button id="cscdUndo" type="button" class="btn btn-lg btn-default dialog-button">Undo</button></div></div><div class="row"><div class="col-xs-3 col-xs-offset-9"><button type="button" class="btn btn-lg btn-default dialog-button" data-dismiss="modal">Cancel</button></div></div></div></div></div></div>');
-			
+			$('body').append(
+				'<div id="cscdModal" class="modal spell-check-modal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">' + 
+					'<div class="modal-dialog">' + 
+						'<div class="modal-content">' + 
+							'<div class="modal-header">' + 
+								'<button type="button" class="close" data-dismiss="modal" aria-label="Close">' + 
+									'<span aria-hidden="true">&times;</span>' + 
+								'</button>' + 
+								'<h4 class="modal-title">' + 
+									'<span class="glyphicon glyphicon-check" aria-hidden="true"></span> Spell Check' + 
+								'</h4>' + 
+							'</div>' + 
+							'<div class="modal-body">' + 
+								'<div class="row">' + 
+									'<div class="col-xs-12">' + 
+										'<h4>Not in Dictionary:</h4>' + 
+									'</div>' + 
+								'</div>' + 
+								'<div class="row">' + 
+									'<div class="col-xs-8">' + 
+										'<div id="cscdContent" class="form-control"></div>' + 
+									'</div>' + 
+									'<div class="col-xs-4">' + 
+										'<button id="cscdIgnoreOne" type="button" class="btn btn-lg btn-default dialog-button">Ignore</button>' + 
+										'<button id="cscdIgnoreAll" type="button" class="btn btn-lg btn-default dialog-button">Ig. All</button>' + 
+									'</div>' + 
+								'</div>' + 
+								'<div class="row">' + 
+									'<div class="col-xs-12">' + 
+										'<h4>Change To:</h4>' + 
+									'</div>' + 
+								'</div>' + 
+								'<div class="row">' + 
+									'<div class="col-xs-8">' + 
+										'<input id="cscdReplacementWord" type="text" class="form-control"/>' + 
+										'<select id="cscdSuggestionList" class="form-control" size="6" ></select>' + 
+									'</div>' + 
+									'<div class="col-xs-4">' + 
+										'<button id="cdcsChangeOne" type="button" class="btn btn-lg btn-default dialog-button change-button">Change</button>' + 
+										'<button id="cscdChangeAll" type="button" class="btn btn-lg btn-default dialog-button">Change All</button>' + 
+										'<button id="cscdUndo" type="button" class="btn btn-lg btn-default dialog-button">Undo</button>' + 
+										'<button type="button" class="btn btn-lg btn-default dialog-button" data-dismiss="modal">Close</button>' + 
+									'</div>' + 
+								'</div>' + 
+							'</div>' + 
+						'</div>' + 
+					'</div>' + 
+				'</div>'
+			);
+				
 			//suggestion selection change
 			$('#cscdSuggestionList').change(function(){
 				$('#cscdReplacementWord').val($(this).find('option:selected').text());
@@ -163,7 +216,7 @@
 			    $.when($.ajax(affPath), $.ajax(dicPath), $.ajax(customPath)).done(function(aff, dic, custom){
                     if(aff[1] != "success" || dic[1] != "success"){
                         //dictionary files failed to load
-                        alert("Dictionary Files failed to load, spellcheck unvailable.");
+                        self.settings.alertFunction("Spellcheck Configuration Error", "Dictionary Files failed to load, spellcheck unvailable.");
                         return false;
                     }
                     //actual dictionary init
@@ -257,10 +310,11 @@
 				    type:"POST",
 				    url: self.settings.spellcheckURL,
 				    dataType: "json",
-				    data: $.param({ '': distinctWords }, true),
+				    data: $.param({ 'distinctWords': distinctWords
+                }, true),
 				    processData: false,
 				    error: function(XMLHttpRequest, textStatus, errorThrown) {
-					    alert('error');
+					    self.settings.alertFunction('Spellcheck System Error', errorThrown);
 				    },
 				    success: function(suggestions) {	
 					    spellcheckingFunction(suggestions);
@@ -346,10 +400,11 @@
 			$('#cscdContent .misspelled').each(function(){
 				$(this).replaceWith($(this).html());
 			});
-			//TODO: change to a friendlier alert
-			alert('Complete!');
-			self.setContentCallback($('#cscdContent').html());
-			$('#cscdModal').modal('hide');
+		    
+			self.settings.alertFunction("Spell Check complete", "Spell Check completed successfully.", function () {
+			    self.setContentCallback($('#cscdContent').html());
+			    $('#cscdModal').modal('hide');
+			});
 		}
 	});
 
