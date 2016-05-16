@@ -25,8 +25,8 @@
 			spellcheckURL: null,
 			suggestionFontSize : '2em',
 			buttonWidth : '95px',
-			noSuggestionsText : '(No Suggestions)',
-			alertFunction : function (header, body, callback) {
+			noSuggestionsText: '(No Suggestions)',
+			alertFunction: function (header, body, callback) {
 			    alert(body);
 			    if (callback)
 			        callback();
@@ -55,55 +55,55 @@
 			
 			//add modal html to DOM
 			$('body').append(
-				'<div id="cscdModal" class="modal spell-check-modal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">' + 
-					'<div class="modal-dialog">' + 
-						'<div class="modal-content">' + 
-							'<div class="modal-header">' + 
-								'<button type="button" class="close" data-dismiss="modal" aria-label="Close">' + 
-									'<span aria-hidden="true">&times;</span>' + 
-								'</button>' + 
-								'<h4 class="modal-title">' + 
-									'<span class="glyphicon glyphicon-check" aria-hidden="true"></span> Spell Check' + 
-								'</h4>' + 
-							'</div>' + 
-							'<div class="modal-body">' + 
-								'<div class="row">' + 
-									'<div class="col-xs-12">' + 
-										'<h4>Not in Dictionary:</h4>' + 
-									'</div>' + 
-								'</div>' + 
-								'<div class="row">' + 
-									'<div class="col-xs-8">' + 
-										'<div id="cscdContent" class="form-control"></div>' + 
-									'</div>' + 
-									'<div class="col-xs-4">' + 
-										'<button id="cscdIgnoreOne" type="button" class="btn btn-lg btn-default dialog-button">Ignore</button>' + 
-										'<button id="cscdIgnoreAll" type="button" class="btn btn-lg btn-default dialog-button">Ig. All</button>' + 
-									'</div>' + 
-								'</div>' + 
-								'<div class="row">' + 
-									'<div class="col-xs-12">' + 
-										'<h4>Change To:</h4>' + 
-									'</div>' + 
-								'</div>' + 
-								'<div class="row">' + 
-									'<div class="col-xs-8">' + 
-										'<input id="cscdReplacementWord" type="text" class="form-control"/>' + 
-										'<select id="cscdSuggestionList" class="form-control" size="6" ></select>' + 
-									'</div>' + 
-									'<div class="col-xs-4">' + 
-										'<button id="cdcsChangeOne" type="button" class="btn btn-lg btn-default dialog-button change-button">Change</button>' + 
-										'<button id="cscdChangeAll" type="button" class="btn btn-lg btn-default dialog-button">Change All</button>' + 
-										'<button id="cscdUndo" type="button" class="btn btn-lg btn-default dialog-button">Undo</button>' + 
-										'<button type="button" class="btn btn-lg btn-default dialog-button" data-dismiss="modal">Close</button>' + 
-									'</div>' + 
-								'</div>' + 
-							'</div>' + 
-						'</div>' + 
-					'</div>' + 
-				'</div>'
-			);
-				
+                '<div id="cscdModal" class="modal spell-check-modal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">' +
+                    '<div class="modal-dialog">' +
+                        '<div class="modal-content">' +
+                            '<div class="modal-header">' +
+                                '<button type="button" class="btn btn-default close" data-dismiss="modal" aria-label="Close">' +
+                                    '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>' +
+                                '</button>' +
+                                '<h4 class="modal-title">' +
+                                    '<span class="glyphicon glyphicon-check" aria-hidden="true"></span> Spell Check' +
+                                '</h4>' +
+                            '</div>' +
+                            '<div class="modal-body">' +
+                                '<div class="row">' +
+                                    '<div class="col-xs-12">' +
+                                        '<h4>Not in Dictionary:</h4>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="row">' +
+                                    '<div class="col-xs-8">' +
+                                        '<div id="cscdContent" class="form-control"></div>' +
+                                    '</div>' +
+                                    '<div class="col-xs-4">' +
+                                        '<button id="cscdIgnoreOne" type="button" class="btn btn-lg btn-default dialog-button">Ignore</button>' +
+                                        '<button id="cscdIgnoreAll" type="button" class="btn btn-lg btn-default dialog-button">Ig. All</button>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="row">' +
+                                    '<div class="col-xs-12">' +
+                                        '<h4>Change To:</h4>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="row">' +
+                                    '<div class="col-xs-8">' +
+                                        '<input id="cscdReplacementWord" type="text" class="form-control"/>' +
+                                        '<select id="cscdSuggestionList" class="form-control" size="6" ></select>' +
+                                    '</div>' +
+                                    '<div class="col-xs-4">' +
+                                        '<button id="cdcsChangeOne" type="button" class="btn btn-lg btn-default dialog-button change-button">Change</button>' +
+                                        '<button id="cscdChangeAll" type="button" class="btn btn-lg btn-default dialog-button">Change All</button>' +
+                                        '<button id="cscdUndo" type="button" class="btn btn-lg btn-default dialog-button">Undo</button>' +
+                                        '<button type="button" class="btn btn-lg btn-default dialog-button" data-dismiss="modal">Close</button>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>'
+            );
+
 			//suggestion selection change
 			$('#cscdSuggestionList').change(function(){
 				$('#cscdReplacementWord').val($(this).find('option:selected').text());
@@ -237,11 +237,21 @@
 		SpellCheck : function(content, setContentCallback){
 			var self = this;
 			self.setContentCallback = setContentCallback;
-			//TODO blocking div
-		
-			//show modal
-			$('#cscdModal').modal('show');
-			
+            
+		    //clear modal from previous spellcheck
+			$('#cscdContent').html('');
+			$('#cscdSuggestionList').html('');
+			$('#cscdReplacementWord').val('');
+            
+		    //show modal
+			var modal = $('#cscdModal');
+			modal.modal('show');
+
+		    //block screen
+			if ($.blockUI) {
+			    modal.block({ message: "<h1>Spellcheck running, please wait...</h1>" });
+			}
+            			
 			//get individual words
 			var $tempDiv = $('<div />').html(content);			
 			var words = [];
@@ -284,7 +294,14 @@
 						    break;
 				    }
 			    };
-			    $tempDiv.contents().each(function(){ replaceWords(this); });			
+			    $tempDiv.contents().each(function () { replaceWords(this); });
+
+                //unblock screen
+			    if ($.blockUI) {
+			        modal.unblock({ message: "Spellcheck running..." });
+			    }
+
+                //set content
 			    $('#cscdContent').html($tempDiv.html());
 			    //setup first word			
 			    var $firstWord = $('#cscdContent .misspelled:first');
@@ -314,7 +331,12 @@
                 }, true),
 				    processData: false,
 				    error: function(XMLHttpRequest, textStatus, errorThrown) {
-					    self.settings.alertFunction('Spellcheck System Error', errorThrown);
+				        self.settings.alertFunction('Spellcheck System Error', errorThrown, function () {
+				            //unblock screen
+				            if ($.blockUI) {
+				                modal.unblock({ message: "Spellcheck running..." });
+				            }
+				        });
 				    },
 				    success: function(suggestions) {	
 					    spellcheckingFunction(suggestions);
@@ -322,6 +344,10 @@
 			    });
             } else {
                 //error no spellcheck providers defined
+                //unblock screen
+                if ($.blockUI) {
+                    modal.unblock({ message: "Spellcheck running..." });
+                }
             }			
 		},
 		ProcessWord : function($currentWordSpan) {
@@ -403,7 +429,7 @@
 		    
 			self.settings.alertFunction("Spell Check complete", "Spell Check completed successfully.", function () {
 			    self.setContentCallback($('#cscdContent').html());
-			    $('#cscdModal').modal('hide');
+                $('#cscdModal').modal('hide');
 			});
 		}
 	});
