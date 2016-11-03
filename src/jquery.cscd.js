@@ -33,6 +33,7 @@
 		    }
 		};
 
+    // ReSharper disable once InconsistentNaming
     // The actual plugin constructor
     function Plugin(element, options) {
         this.element = element;
@@ -95,7 +96,7 @@
                                         '<button id="cdcsChangeOne" type="button" class="btn btn-lg btn-default dialog-button change-button">Change</button>' +
                                         '<button id="cscdChangeAll" type="button" class="btn btn-lg btn-default dialog-button">Change All</button>' +
                                         '<button id="cscdUndo" type="button" class="btn btn-lg btn-default dialog-button">Undo</button>' +
-                                        '<button type="button" class="btn btn-lg btn-default dialog-button" data-dismiss="modal">Close</button>' +
+                                        '<button id="cscdClose" type="button" class="btn btn-lg btn-default dialog-button">Close</button>' +
                                     '</div>' +
                                 '</div>' +
                             '</div>' +
@@ -134,7 +135,7 @@
             //all change one events
             $('#cdcsChangeOne').click(function () { self.ChangeOne() });
             $('#cscdReplacementWord').keypress(function (event) {
-                if (event.keyCode == 13) {
+                if (event.keyCode === 13) {
                     self.ChangeOne();
                 }
             });
@@ -165,7 +166,7 @@
                 self.ProcessNextTypo();
             });
 
-            //undo click - doesn't work yet...
+            //undo click
             $('#cscdUndo').click(function () {
                 var $activeWord = $('#cscdContent .misspelled-active');
 
@@ -203,7 +204,13 @@
                         usePrev = true;
                     }
                 });
+
                 self.ProcessWord($nextWord);
+            });
+
+            $('#cscdClose').click(function() {
+                self.setContentCallback($('#cscdContent').html());
+                $('#cscdModal').modal('hide');
             });
 
             //dictionary init for javascript dictionary
@@ -214,14 +221,15 @@
                 var dicPath = partialpath + ".dic";
                 var customPath = partialpath + "_Custom.txt";
                 $.when($.ajax(affPath), $.ajax(dicPath), $.ajax(customPath)).done(function (aff, dic, custom) {
-                    if (aff[1] != "success" || dic[1] != "success") {
+                    if (aff[1] !== "success" || dic[1] !== "success") {
                         //dictionary files failed to load
                         self.settings.alertFunction("Spellcheck Configuration Error", "Dictionary Files failed to load, spellcheck unvailable.");
                         return false;
                     }
+                    // ReSharper disable once UndeclaredGlobalVariableUsing
                     //actual dictionary init
-                    self.typojs = new Typo(self.settings.language, aff[0], dic[0]);
-                    if (custom[1] == "success") {
+                    self.typojs = new Typo(self.settings.language, aff[0], dic[0]);     // from the Typo plugin
+                    if (custom[1] === "success") {
                         //insert custom words into dictionary
                         $.each(custom[0].split("\n"), function () {
                             var customWord = this.trim();
@@ -249,14 +257,14 @@
 
             //block screen
             if ($.blockUI) {
-                modal.block({ message: "<h1>Spellcheck running, please wait...</h1>" });
+                modal.block({ message: "<h1>Please wait...</h1>" });
             }
 
             //get individual words
             var $tempDiv = $('<div />').html(content);
             var words = [];
             //regex that gets all words from a string
-            var wordRegularExpression = new RegExp(/(\w+)/g);
+            var wordRegularExpression = new RegExp(/(\w+(['-]\w+)?)/g);
             var findWords = function (node) {
                 switch (node.nodeType) {
                     case 1:
@@ -287,8 +295,8 @@
                         case 3:
                             var nodeValue = node.nodeValue;
                             $(node).replaceWith(nodeValue.replace(wordRegularExpression,
-							    function (str, p1, offset, s) {
-							        return GetTypo(p1, suggestions);
+							    function (str, p1) {
+							        return getTypo(p1, suggestions);
 							    }
 						    ));
                             break;
@@ -305,7 +313,7 @@
                 $('#cscdContent').html($tempDiv.html());
                 //setup first word			
                 var $firstWord = $('#cscdContent .misspelled:first');
-                if ($firstWord.length != 0) {
+                if ($firstWord.length !== 0) {
                     self.ProcessWord($firstWord);
                 } else {
                     self.SpellCheckComplete();
@@ -331,7 +339,7 @@
                         'distinctWords': distinctWords
                     }, true),
                     processData: false,
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    error: function (xmlHttpRequest, textStatus, errorThrown) {
                         self.settings.alertFunction('Spellcheck System Error', errorThrown, function () {
                             //unblock screen
                             if ($.blockUI) {
@@ -362,7 +370,7 @@
             $contentDiv.scrollTo($contentDiv.scrollTop() + $currentWordSpan.position().top - $contentDiv.height() / 2 + $currentWordSpan.height() / 2);
 
             //enable/disable undo button
-            if ($currentWordSpan.get(0) == $('#cscdContent .misspelled').first().get(0)) {
+            if ($currentWordSpan.get(0) === $('#cscdContent .misspelled').first().get(0)) {
                 $('#cscdUndo').prop('disabled', true);
             } else {
                 $('#cscdUndo').prop('disabled', false);
@@ -458,7 +466,7 @@
     };
 
     $.fn.scrollTo = function (target, options, callback) {
-        if (typeof options == 'function' && arguments.length == 2) { callback = options; options = target; }
+        if (typeof options === 'function' && arguments.length === 2) { callback = options; options = target; }
         var settings = $.extend({
             scrollTarget: target,
             offsetTop: 50,
@@ -490,7 +498,7 @@
         return out;
     };
 
-    var GetTypo = function (word, typos) {
+    var getTypo = function (word, typos) {
         if (typos[word] == null) {
             return word;
         } else {
