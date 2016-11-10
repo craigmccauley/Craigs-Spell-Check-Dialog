@@ -294,11 +294,13 @@
                             break;
                         case 3:
                             var nodeValue = node.nodeValue;
-                            $(node).replaceWith(nodeValue.replace(wordRegularExpression,
-							    function (str, p1) {
-							        return getTypo(p1, suggestions);
-							    }
-						    ));
+                            $(node).replaceWith(
+                                escapeHtml(nodeValue).replace(wordRegularExpression,
+							        function (str, p1) {
+							            return getTypo(p1, suggestions);
+							        }
+						        )
+                            );
                             break;
                     }
                 };
@@ -309,8 +311,15 @@
                     modal.unblock({ message: "Spellcheck running..." });
                 }
 
+
+                //6044: Clean out any script tags before adding the html to the dom.
+                //This is accomplished via the jQuery method $.parseHTML()
+                var cleanHtml = $.parseHTML($tempDiv.html());
                 //set content
-                $('#cscdContent').html($tempDiv.html());
+                $('#cscdContent').html(cleanHtml);
+
+
+
                 //setup first word			
                 var $firstWord = $('#cscdContent .misspelled:first');
                 if ($firstWord.length !== 0) {
@@ -505,6 +514,20 @@
             return "<span class='misspelled' data-orig='" + word + "' data-suggestions='" + typos[word] + "'>" + word + "</span>";
         }
     }
+
+
+    var entityMap = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': '&quot;',
+        "'": '&#39;',
+        "/": '&#x2F;'
+    };
+
+    var escapeHtml = function (string) {
+        return String(string).replace(/[&<>"'\/]/g, function (s) { return entityMap[s]; });
+    };
 
 
 })(jQuery, window, document);
